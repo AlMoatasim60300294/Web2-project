@@ -13,3 +13,7 @@ ID: 60096897
 Student Email: 60096897@udst.edu.qa
 
 
+team divide work:
+AlMoatasim: mongodb connection
+Abdalwahab: sign up - log in 
+Momen: Forget password
