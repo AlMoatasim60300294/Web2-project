@@ -21,3 +21,6 @@ Forgot password?
 
 additional
 - if the try to rewrite the url that we do not have it we will redirect him to http://127.0.0.1:5500/coreui_dist/dist/500.html 
+- create a session and delete when user logout
+- user different types (Admin, Standard) should have a simple 
+- the mongodb network access = 0.0.0.0/0
