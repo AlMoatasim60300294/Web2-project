@@ -1,0 +1,23 @@
+login.html 
+
+Sign up - click on the register Now! have to take you to the register.html 
+
+- fill the form
+- note: the password must be save using hash method
+- click create Account should be save in database MongoDB
+
+Login
+- fill the sign in 
+- check if the username is in the database
+- compare password user input with the save hash in the database
+- if (username found and password hash is same) take the user to the main http://127.0.0.1:5500/coreui_dist/dist/
+- if (not found) console.log() you do not have a user please register 
+
+Forgot password?
+- take you user to a page he will enter his email
+- check it the email is in the database
+- console.log() on the page, [you receive an email to reset you password, check you email]
+- note: just a massage without an am actional email that is received
+
+additional
+- if the try to rewrite the url that we do not have it we will redirect him to http://127.0.0.1:5500/coreui_dist/dist/500.html 
