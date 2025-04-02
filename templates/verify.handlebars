@@ -1,0 +1,17 @@
+{{#if message}}
+<div style="color: red;">
+    {{ message }}
+</div>
+{{/if}}
+
+<h2>Email Verification</h2>
+<form method="post">
+    <label>Email:</label> 
+    <input name="email" type="email" required><br>
+
+    <label>Activation Code:</label> 
+    <input name="activationCode" required><br>
+
+    <input type="submit" value="Verify">
+</form>
+<p><a href="/">Back to Login</a></p>

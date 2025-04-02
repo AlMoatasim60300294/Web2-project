@@ -1,0 +1,19 @@
+{{#if message}}
+<div style="color: red;">
+    {{ message }}
+</div>
+{{/if}}
+
+<h2>Login to CMS</h2>
+<form method="post">
+    <label>Username:</label> 
+    <input name="username" required><br>
+
+    <label>Password:</label> 
+    <input name="password" type="password" required><br>
+
+    <input type="submit" value="Login">
+</form>
+
+<p><a href="/forgot-password">Forgot Password?</a></p>
+<p>Don't have an account? <a href="/register">Sign Up</a></p>

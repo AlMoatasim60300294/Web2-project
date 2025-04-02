@@ -1,0 +1,29 @@
+<h1>Admin Dashboard</h1>
+<p>Welcome, {{ username }}</p>
+
+<h2>Users Awaiting Activation</h2>
+<table border="1">
+    <tr>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Action</th>
+    </tr>
+    {{#each users}}
+    <tr>
+        <td>{{ this.UserName }}</td>
+        <td>{{ this.Email }}</td>
+        <td>
+            {{#if this.Active}}
+                ✅ Activated
+            {{else}}
+                <form method="post" action="/admin/activate">
+                    <input type="hidden" name="email" value="{{ this.Email }}">
+                    <button type="submit">Activate</button>
+                </form>
+            {{/if}}
+        </td>
+    </tr>
+    {{/each}}
+</table>
+
+<p><a href="/logout">Logout</a></p>

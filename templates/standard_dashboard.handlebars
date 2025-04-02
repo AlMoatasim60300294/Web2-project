@@ -1,0 +1,29 @@
+<h1>Welcome, {{ username }}</h1>
+
+<h2>Your Courses</h2>
+{{#if courses.length}}
+    <ul>
+        {{#each courses}}
+            <li>{{ this }}</li>
+        {{/each}}
+    </ul>
+{{else}}
+    <p>You are not enrolled in any courses.</p>
+{{/if}}
+
+<h2>Submit a Request</h2>
+<form method="post" action="/submit-request">
+    <label>Category:</label>
+    <select name="category">
+        <option value="change-section">Change Section</option>
+        <option value="capstone-registration">Capstone Registration</option>
+        <option value="course-override">Course Override</option>
+    </select><br>
+
+    <label>Details:</label>
+    <textarea name="details" required></textarea><br>
+
+    <input type="submit" value="Submit Request">
+</form>
+
+<p><a href="/logout">Logout</a></p>

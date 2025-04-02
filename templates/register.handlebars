@@ -1,0 +1,24 @@
+{{#if message}}
+<div style="color: red;">
+    {{ message }}
+</div>
+{{/if}}
+
+<h2>Register for CMS</h2>
+<form method="post">
+    <label>Username:</label> 
+    <input name="username" required><br>
+
+    <label>Email:</label> 
+    <input name="email" type="email" required><br>
+
+    <label>Password:</label> 
+    <input name="password" type="password" required><br>
+
+    <label>Repeat Password:</label> 
+    <input name="repeatPassword" type="password" required><br>
+
+    <input type="submit" value="Register">
+</form>
+
+<p>Already have an account? <a href="/">Login</a></p>
