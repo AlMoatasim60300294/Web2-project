@@ -44,7 +44,9 @@ async function createUser(username, password, email, userType = "student") {
     let isActive = userType === "admin" ? true : false; // ✅ Admins are automatically active
 
     await persistence.createUser(username, hashedPassword, email, activationCode, userType, isActive);
-    
+
+    console.log(`Activation code for ${email}: ${activationCode}`);
+
     return { success: true, activationCode };
 }
 
