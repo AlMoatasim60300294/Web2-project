@@ -28,27 +28,29 @@ async function checkLogin(username, password) {
 }
 
 // Create a new user
-async function createUser(username, password, email, userType = "student") {
+async function createUser(username, password, email) {
     let existingUser = await persistence.getUserByUsernameOrEmail(username, email);
-
     if (existingUser) {
         return { success: false, message: "Username or email already exists" };
     }
 
-    let activationCode = userType === "admin" ? null : crypto.randomUUID(); // ✅ Admins don’t need activation codes
+    // 👇 This enforces admin only if username is exactly 'admin'
+    userType = (username === "admin") ? "admin" : "student";
+    let isActive = (username === "admin") ? true : false;
+    let activationCode = (username === "admin") ? null : crypto.randomUUID();
 
     let hash = crypto.createHash('sha256');
     hash.update(password);
     let hashedPassword = hash.digest('hex');
 
-    let isActive = userType === "admin" ? true : false; // ✅ Admins are automatically active
-
     await persistence.createUser(username, hashedPassword, email, activationCode, userType, isActive);
-
-    console.log(`Activation code for ${email}: ${activationCode}`);
+    if (activationCode) {
+        console.log(`Activation code for ${email}: ${activationCode}`);
+    }
 
     return { success: true, activationCode };
 }
+
 
 // Verify a user using email and activation code
 async function verifyUser(email, activationCode) {
@@ -77,10 +79,10 @@ async function getStudentCourses(username) {
 async function startSession(data) {
     let uuid = crypto.randomUUID();
     // Make sure data contains both username and UserType
-    await persistence.storeSession(uuid, data.username, data.UserType); // Pass the userType to persistence
+    await persistence.storeSession(uuid, data.username, data.userType); // Pass the userType to persistence
     return {
         uuid: uuid,
-        expiry: new Date(Date.now() + 5 * 60 * 1000)
+        expiry: new Date(Date.now() + 5 * 60 * 1000) // 5 mins
     };
 }
 
@@ -104,5 +106,5 @@ module.exports = {
     getUserByEmail,
     getAllUsers,
     activateUser,
-    getStudentCourses
+    getStudentCourses, 
 };
