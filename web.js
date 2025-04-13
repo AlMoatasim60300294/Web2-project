@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const business = require('./business.js');
-
+const PORT = 8000;
 const app = express();
 const handlebars = require('express-handlebars');
 
@@ -13,42 +13,40 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Login Page
-app.get('/', (req, res) => res.render('login', { layout: undefined, message: req.query.message }));
+app.get('/', (req, res) => {
+    res.render('login', { layout: undefined, message: req.query.message })
+});
 
-// Modify your login POST route in web.js
+// Handle login and role-based redirection
 app.post('/', async (req, res) => {
     let { username, password } = req.body;
 
     if (!username || !password) {
-        res.redirect("/?message=Invalid Username/Password");
-        return;
+        return res.redirect("/?message=Invalid Username/Password");
     }
 
-    let userType = await business.checkLogin(username, password);
-    if (!userType) {
-        res.redirect("/?message=Invalid Username/Password");
-        return;
+    // Check login
+    let loginStatus = await business.checkLogin(username, password);
+    if (!loginStatus) {
+        return res.redirect("/?message=Invalid Username/Password");
     }
 
-    if (userType === "inactive") {
-        res.redirect("/?message=Please verify your email before logging in");
-        return;
+    if (loginStatus === "inactive") {
+        return res.redirect("/?message=Please verify your email before logging in");
     }
 
-    // Start a session with both username and userType
-    let session = await business.startSession({ username, UserType: userType });
+    // 🔧 Assign userType based on username
+    let userType = (username === "admin") ? "admin" : "student";
+
+    // Start session
+    let session = await business.startSession({ username, userType });
 
     res.cookie('CMS_Session', session.uuid, { expires: session.expiry });
-    
-    // Redirect based on user type
-    if (userType === "admin") {
-        res.redirect('/admin');
-    } else if (userType === "student") {
-        res.redirect('/dashboard');
-    } else {
-        res.redirect('/course-management'); // Default fallback
-    }
+
+    // 🔁 Redirect
+    res.redirect(userType === "admin" ? "/admin" : "/dashboard");
 });
+
 
 // Middleware to check session
 app.use(async (req, res, next) => {
@@ -61,7 +59,7 @@ app.use(async (req, res, next) => {
     if (sessionData) {
         // Make sure we're using the correct property names
         req.user = sessionData.username; // Match the property name used in startSession
-        req.userType = sessionData.UserType;
+        req.userType = sessionData.userType;
     }
     next();
 });
@@ -74,12 +72,12 @@ app.get('/admin', async (req, res) => {
     }
 
     let sessionData = await business.getSessionData(sessionKey);
-    if (!sessionData || sessionData.UserType !== "admin") {
+    if (!sessionData || sessionData.userType !== "admin") {
         return res.redirect("/?message=Unauthorized");
     }
 
     let users = await business.getAllUsers(); // ✅ Fetch users from DB
-    res.render("admin_dashboard", { username: sessionData.UserName, users });
+    res.render("admin_dashboard", { username: sessionData.username, users });
 });
 
 
@@ -102,34 +100,18 @@ app.get('/dashboard', async (req, res) => {
     }
 
     let sessionData = await business.getSessionData(sessionKey);
-    if (!sessionData || sessionData.UserType !== "student") {
+    if (!sessionData || sessionData.userType !== "student") {
         return res.redirect("/?message=Unauthorized");
     }
 
-    let courses = await business.getStudentCourses(sessionData.UserName); // ✅ Fetch courses
-    res.render("standard_dashboard", { username: sessionData.UserName, courses });
-});
-
-
-// Course Management Access
-app.get('/course-management', async (req, res) => {
-    let sessionKey = req.cookies.CMS_Session; // ✅ Changed from "lab7session"
-    if (!sessionKey) {
-        res.redirect("/?message=Not logged in");
-        return;
-    }
-
-    let sessionData = await business.getSessionData(sessionKey);
-    if (!sessionData) {
-        res.redirect("/?message=Not logged in");
-        return;
-    }
-
-    res.render('course_management', { layout: undefined, username: sessionData.UserName });
+    let courses = await business.getStudentCourses(sessionData.username); // ✅ Fetch courses
+    res.render("standard_dashboard", { username: sessionData.username, courses });
 });
 
 // Register
-app.get('/register', (req, res) => res.render('register', { layout: undefined, message: req.query.message }));
+app.get('/register', (req, res) => {
+    res.render('register', { layout: undefined, message: req.query.message });
+});
 
 app.post('/register', async (req, res) => {
     let { username, email, password, repeatPassword } = req.body;
@@ -153,8 +135,9 @@ app.post('/register', async (req, res) => {
     res.redirect('/?message=Check console for activation code');
 });
 
-// Verification
-app.get('/verify', (req, res) => res.render('verify', { layout: undefined }));
+app.get('/verify', (req, res) => {
+    res.render('verify', { layout: undefined, message: req.query.message });
+});
 
 app.post('/verify', async (req, res) => {
     let { email, activationCode } = req.body;
@@ -186,45 +169,15 @@ app.post('/forgot-password', async (req, res) => {
 
 // Logout
 app.get('/logout', async (req, res) => {
-    let sessionKey = req.cookies.CMS_Session; // ✅ Changed from "lab7session"
+    let sessionKey = req.cookies.CMS_Session;
 
     if (sessionKey) {
         await business.deleteSession(sessionKey);
-        res.clearCookie('CMS_Session'); // ✅ Changed from "lab7session"
+        res.clearCookie('CMS_Session');
     }
 
     res.redirect('/?message=Logged out successfully');
 });
 
-// ✅ FIXED: Submit Request
-app.post("/submit-request", async (req, res) => {
-    if (!req.user) {
-        return res.redirect("/?message=Not logged in");
-    }
-
-    await business.submitRequest(req.user, req.body.category, req.body.details); // ✅ FIXED: Use business layer
-    res.redirect("/course-management");
-});
-
-// ✅ FIXED: HoD Request View
-app.get("/hod/requests", async (req, res) => {
-    if (!req.user || req.userType !== "hod") {
-        return res.redirect("/?message=Unauthorized");
-    }
-
-    let requests = await business.getAllRequests(); // ✅ FIXED: Use business layer
-    res.render("hod-requests", { requests });
-});
-
-// ✅ FIXED: HoD Process Request
-app.post("/hod/process", async (req, res) => {
-    if (!req.user || req.userType !== "hod") {
-        return res.redirect("/?message=Unauthorized");
-    }
-
-    await business.processRequest(req.body.requestID, req.body.action); // ✅ FIXED: Use business layer
-    res.redirect("/hod/requests");
-});
-
 // Start Server
-app.listen(8000, () => console.log("Server running at http://127.0.0.1:8000/"));
+app.listen(PORT, () => console.log(`Server running at http://127.0.0.1:${PORT}/`));
