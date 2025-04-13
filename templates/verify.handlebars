@@ -1,17 +1,23 @@
-{{#if message}}
-<div style="color: red;">
-    {{ message }}
-</div>
-{{/if}}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Email Verification</title>
+</head>
+<body>
+  <h2>Email Verification</h2>
+  {{#if message}}
+    <p style="color:red">{{message}}</p>
+  {{/if}}
+  <form action="/verify" method="POST">
+    <label>Email:</label><br>
+    <input type="email" name="email" required /><br><br>
+    
+    <label>Activation Code:</label><br>
+    <input type="text" name="activationCode" required /><br><br>
+    
+    <button type="submit">Verify</button>
+  </form>
 
-<h2>Email Verification</h2>
-<form method="post">
-    <label>Email:</label> 
-    <input name="email" type="email" required><br>
-
-    <label>Activation Code:</label> 
-    <input name="activationCode" required><br>
-
-    <input type="submit" value="Verify">
-</form>
-<p><a href="/">Back to Login</a></p>
+  <p><a href="/">Back to login</a></p>
+</body>
+</html>
