@@ -3,12 +3,12 @@
 ## 🚀 Milestone Overview
 
 This milestone implements the foundational user flow of the Course Management System. It focuses on:
--> User registration with email verification
--> Login functionality with role-based redirection
--> Session handling using cookies and MongoDB (no express-session)
--> Admin dashboard for activating users
--> Student dashboard to view enrolled courses
--> Forgot password simulation via console logs
+1. User registration with email verification
+2. Login functionality with role-based redirection
+3. Session handling using cookies and MongoDB (no express-session)
+4. Admin dashboard for activating users
+5. Student dashboard to view enrolled courses
+6. Forgot password simulation via console logs
 
 ---
 
