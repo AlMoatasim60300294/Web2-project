@@ -96,6 +96,12 @@ async function deleteSession(key) {
     await persistence.deleteSession(key);
 }
 
+// pass through the business layer to persistence and to web layer 
+// deal with requestion should include:  username, category, details
+async function submitRequest(request) {
+    await persistence.saveRequest(request);
+}
+
 module.exports = {
     checkLogin,
     createUser,
@@ -106,5 +112,6 @@ module.exports = {
     getUserByEmail,
     getAllUsers,
     activateUser,
-    getStudentCourses, 
+    getStudentCourses,
+    submitRequest // added 
 };
