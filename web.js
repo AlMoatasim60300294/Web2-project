@@ -108,6 +108,27 @@ app.get('/dashboard', async (req, res) => {
     res.render("standard_dashboard", { username: sessionData.username, courses });
 });
 
+// request for the user 
+app.post('/submit-request', async (req, res) => {
+    if (!req.user || req.userType !== "student") {
+        return res.redirect("/?message=Unauthorized");
+    }
+
+    const { category, details } = req.body;
+
+    if (!category || !details) {
+        return res.redirect('/dashboard?message=All fields are required');
+    }
+
+    await business.submitRequest({
+        username: req.user,
+        category,
+        details
+    });
+
+    res.redirect('/dashboard?message=Request submitted successfully');
+});
+
 // Register
 app.get('/register', (req, res) => {
     res.render('register', { layout: undefined, message: req.query.message });
