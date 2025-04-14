@@ -4,6 +4,7 @@ let client;
 let db;
 let users;
 let sessions;
+let requests;
 
 // Database Connection (Keep it the Same as You Wanted)
 async function connectDatabase() {
@@ -12,6 +13,7 @@ async function connectDatabase() {
         db = client.db('CMS_db');  // database name
         users = db.collection('Users');  // Collection for user accounts
         sessions = db.collection('Sessions');  // Collection for session data        
+        requests = db.collection('Requests');  // Collection for requests data
     }
 }
 
@@ -126,6 +128,31 @@ async function deleteSession(sessionID) {
     await sessions.deleteOne({ sessionID });
     console.log("Session deleted.");
 }
+
+async function saveRequest(requestUser) {
+    await connectDatabase();
+
+    const { username, category, details } = requestUser;
+
+    // Step 1: Count current requests in same category with status = "Pending"
+    const queueSize = await requests.countDocuments({ category, status: "Pending" });
+
+    // Step 2: Estimate time: 15 mins per request
+    const estimatedTime = new Date(Date.now() + queueSize * 15 * 60 * 1000);
+
+    // Step 3: Save full request object
+    await requests.insertOne({
+        username,
+        category,
+        details,
+        status: "Pending",
+        submittedAt: new Date(),
+        estimatedCompletion: estimatedTime
+    });
+
+    console.log(`New request submitted by ${username} in ${category} queue`);
+}
+
 // Export All Functions
 module.exports = {
     getUserDetails,
@@ -138,5 +165,6 @@ module.exports = {
     getUserByUsernameOrEmail,
     getAllUsers,
     activateUser,
-    getStudentCourses
+    getStudentCourses,
+    saveRequest // adding save Request from final part 
 };
