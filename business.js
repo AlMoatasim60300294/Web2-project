@@ -102,6 +102,36 @@ async function submitRequest(request) {
     await persistence.saveRequest(request);
 }
 
+async function getRequestsByUser(username, semester) {
+    return await persistence.getRequestsByUser(username, semester);
+}
+
+
+async function cancelRequestByUser(requestId, username) {
+    return await persistence.cancelRequest(requestId, username);
+}
+
+async function getAllRequests() {
+    return await persistence.getAllRequests();
+}
+
+async function getRequestsByCategory(category) {
+    return await persistence.getRequestsByCategory(category);
+}
+
+async function getRequestById(id) {
+    return await persistence.getRequestById(id);
+}
+
+async function processRequest(id, status, note) {
+    return await persistence.processRequest(id, status, note);
+}
+
+async function getRandomPendingRequest() {
+    return await persistence.getRandomPendingRequest();
+}
+
+
 module.exports = {
     checkLogin,
     createUser,
@@ -112,6 +142,13 @@ module.exports = {
     getUserByEmail,
     getAllUsers,
     activateUser,
-    getStudentCourses,
-    submitRequest // added 
+    getStudentCourses, 
+    getRequestsByUser,
+    submitRequest,
+    cancelRequestByUser,
+    getAllRequests,
+    getRequestsByCategory,
+    getRequestById,
+    processRequest,
+    getRandomPendingRequest
 };
