@@ -1,0 +1,16 @@
+<h2>Process Request</h2>
+
+<p><b>Student:</b> {{request.username}}</p>
+<p><b>Category:</b> {{request.category}}</p>
+<p><b>Details:</b> {{request.details}}</p>
+<p><b>Status:</b> {{request.status}}</p>
+
+<form method="POST" action="/admin/process/{{request._id}}">
+    <label>Note:</label><br>
+    <textarea name="note" rows="4" cols="50" required></textarea><br><br>
+
+    <button type="submit" name="action" value="Resolved">✅ Resolve</button>
+    <button type="submit" name="action" value="Rejected">❌ Reject</button>
+</form>
+
+<p><a href="/admin/queues">⬅ Back to Queues</a></p>

@@ -1,0 +1,30 @@
+<h2>Requests in "{{category}}" Queue</h2>
+
+<table border="1">
+    <tr>
+        <th>Student</th>
+        <th>Details</th>
+        <th>Status</th>
+        <th>Submitted At</th>
+        <th>Action</th>
+    </tr>
+    {{#each requests}}
+    <tr>
+        <td>{{username}}</td>
+        <td>{{details}}</td>
+        <td>{{status}}</td>
+        <td>{{submittedAt}}</td>
+        <td>
+            {{#if (eq status "Pending")}}
+                <form method="GET" action="/admin/process/{{_id}}">
+                    <button type="submit">Process</button>
+                </form>
+            {{else}}
+                <i>{{status}}</i>
+            {{/if}}
+        </td>
+    </tr>
+    {{/each}}
+</table>
+
+<p><a href="/admin/queues">⬅ Back to Queue Overview</a></p>
