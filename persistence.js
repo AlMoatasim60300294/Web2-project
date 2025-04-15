@@ -1,4 +1,6 @@
 const mongodb = require('mongodb');
+const { ObjectId } = require('mongodb');
+
 
 let client;
 let db;
@@ -98,6 +100,13 @@ async function getStudentCourses(username) {
     return student.Courses || [];
 }
 
+async function getRequestsByUser(username, semester) {
+    await connectDatabase();
+    return await requests.find({ username, semester }).toArray();
+}
+
+
+
 // Session Management - Expires in 5 Minutes
 async function storeSession(sessionID, username, userType) {
     await connectDatabase();
@@ -115,7 +124,7 @@ async function getSession(sessionID) {
         if (now > session.expiresAt) {
             console.log("Session expired. Logging out user.");
             await deleteSession(sessionID);
-            return null; // ✅ FIXED: Session expired, return null
+            return null; 
         }
         return session;
     }
@@ -145,13 +154,66 @@ async function saveRequest(requestUser) {
         username,
         category,
         details,
+        semester: "Winter 2025", // hardcoded for now
         status: "Pending",
         submittedAt: new Date(),
         estimatedCompletion: estimatedTime
     });
+    
 
     console.log(`New request submitted by ${username} in ${category} queue`);
 }
+
+async function cancelRequest(requestId, username) {
+    await connectDatabase();
+
+    const result = await requests.updateOne(
+        { _id: new ObjectId(requestId), username, status: "Pending" },
+        { $set: { status: "Cancelled", cancelledAt: new Date() } }
+    );
+
+    return result.modifiedCount > 0;
+};
+
+async function getAllRequests() {
+    await connectDatabase();
+    return await requests.find({}).toArray();
+}
+
+async function getRequestsByCategory(category) {
+    await connectDatabase();
+    return await requests.find({ category }).toArray();
+}
+
+async function getRequestById(id) {
+    await connectDatabase();
+    return await requests.findOne({ _id: new ObjectId(id) });
+}
+
+async function processRequest(id, status, note) {
+    await connectDatabase();
+    return await requests.updateOne(
+        { _id: new ObjectId(id), status: "Pending" },
+        {
+            $set: {
+                status,
+                processedAt: new Date(),
+                note
+            }
+        }
+    );
+}
+
+async function getRandomPendingRequest() {
+    await connectDatabase();
+    const pending = await requests.aggregate([
+        { $match: { status: "Pending" } },
+        { $sample: { size: 1 } } // MongoDB random sample
+    ]).toArray();
+
+    return pending[0]; // or undefined if none
+}
+
 
 // Export All Functions
 module.exports = {
@@ -166,5 +228,12 @@ module.exports = {
     getAllUsers,
     activateUser,
     getStudentCourses,
-    saveRequest // adding save Request from final part 
+    getRequestsByUser,
+    saveRequest,
+    cancelRequest,
+    getAllRequests,
+    getRequestsByCategory,
+    getRequestById,
+    processRequest,
+    getRandomPendingRequest
 };
