@@ -1,19 +1,85 @@
-{{#if message}}
-<div style="color: red;">
-    {{ message }}
-</div>
-{{/if}}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- ✅ CoreUI CSS -->
+    <link rel="stylesheet" href="/dist/vendors/simplebar/css/simplebar.css">
+    <link rel="stylesheet" href="/dist/css/style.css">
+    <link rel="stylesheet" href="/dist/css/examples.css">
+  </head>
 
-<h2>Login to CMS</h2>
-<form method="post">
-    <label>Username:</label> 
-    <input name="username" required><br>
+  <body>
+    <div class="bg-light min-vh-100 d-flex flex-row align-items-center">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+            <div class="card-group d-block d-md-flex row">
 
-    <label>Password:</label> 
-    <input name="password" type="password" required><br>
+              <!-- 🔐 Login Card -->
+              <div class="card col-md-7 p-4 mb-0">
+                <div class="card-body">
+                  <h1>Login</h1>
+                  <p class="text-medium-emphasis">Sign In to your account</p>
 
-    <input type="submit" value="Login">
-</form>
+                  {{#if message}}
+                  <div class="alert alert-danger" role="alert">
+                    {{message}}
+                  </div>
+                  {{/if}}
 
-<p><a href="/forgot-password">Forgot Password?</a></p>
-<p>Don't have an account? <a href="/register">Sign Up</a></p>
+                  <form method="POST" action="/">
+                    <div class="input-group mb-3">
+                      <span class="input-group-text">
+                        <svg class="icon">
+                          <use xlink:href="/dist/vendors/@coreui/icons/svg/free.svg#cil-user"></use>
+                        </svg>
+                      </span>
+                      <input class="form-control" type="text" name="username" placeholder="Username" required>
+                    </div>
+
+                    <div class="input-group mb-4">
+                      <span class="input-group-text">
+                        <svg class="icon">
+                          <use xlink:href="/dist/vendors/@coreui/icons/svg/free.svg#cil-lock-locked"></use>
+                        </svg>
+                      </span>
+                      <input class="form-control" type="password" name="password" placeholder="Password" required>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-6">
+                        <button class="btn btn-primary px-4" type="submit">Login</button>
+                      </div>
+                      <div class="col-6 text-end">
+                        <a class="btn btn-link px-0" href="/forgot-password">Forgot password?</a>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <!-- 📝 Signup Card -->
+              <div class="card col-md-5 text-white bg-primary py-5">
+                <div class="card-body text-center">
+                  <div>
+                    <h2>Sign up</h2>
+                    <p>If you don't have an account yet, register now to request changes.</p>
+                    <a href="/register" class="btn btn-outline-light mt-3">Register Now!</a>
+                  </div>
+                </div>
+              </div>
+
+            </div> <!-- /.card-group -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ CoreUI JS -->
+    <script src="/dist/vendors/@coreui/coreui/js/coreui.bundle.min.js"></script>
+    <script src="/dist/vendors/simplebar/js/simplebar.min.js"></script>
+  </body>
+</html>
