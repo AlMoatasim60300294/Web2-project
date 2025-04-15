@@ -1,18 +1,14 @@
-<h1>Welcome, {{ username }}</h1>
+<!-- 🔓 LOGOUT BUTTON -->
+<div style="text-align: right;">
+  <form action="/logout" method="GET" style="display: inline;">
+    <button type="submit">Logout</button>
+  </form>
+</div>
 
-<h2>Your Courses</h2>
-{{#if courses.length}}
-    <ul>
-        {{#each courses}}
-            <li>{{ this }}</li>
-        {{/each}}
-    </ul>
-{{else}}
-    <p>You are not enrolled in any courses.</p>
-{{/if}}
-
+<!-- Section 1: Form always shown -->
 <h2>Submit a Request</h2>
 <form method="post" action="/submit-request">
+    <input type="hidden" name="csrfToken" value="{{csrfToken}}">
     <label>Category:</label>
     <select name="category">
         <option value="change-section">Change Section</option>
@@ -26,4 +22,47 @@
     <input type="submit" value="Submit Request">
 </form>
 
-<p><a href="/logout">Logout</a></p>
+<!-- Section 2: Show requests only when visiting /my-requests -->
+{{#if requests}}
+<hr>
+
+<!-- 🔽 SEMESTER FILTER DROPDOWN -->
+<form method="get" action="/my-requests">
+    <label for="semester">Select Semester:</label>
+    <select name="semester" id="semester">
+        <option value="Winter 2025" {{#if (eq semester "Winter 2025")}}selected{{/if}}>Winter 2025</option>
+        <option value="Fall 2024" {{#if (eq semester "Fall 2024")}}selected{{/if}}>Fall 2024</option>
+    </select>
+    <button type="submit">Filter</button>
+</form>
+<br>
+
+<h2>Your Submitted Requests</h2>
+<table border="1">
+  <tr>
+    <th>Category</th>
+    <th>Details</th>
+    <th>Status</th>
+    <th>Submitted At</th>
+    <th>Estimated Completion</th>
+  </tr>
+  {{#each requests}}
+  <tr>
+    <td>{{category}}</td>
+    <td>{{details}}</td>
+    <td>{{status}}</td>
+    <td>{{submittedAt}}</td>
+    <td>
+      {{#if (eq status "Pending")}}
+      <form action="/cancel-request" method="POST">
+          <input type="hidden" name="requestId" value="{{_id}}">
+          <button type="submit">Cancel</button>
+      </form>
+      {{else}}
+      N/A
+      {{/if}}      
+    </td>
+  </tr>
+  {{/each}}
+</table>
+{{/if}}
