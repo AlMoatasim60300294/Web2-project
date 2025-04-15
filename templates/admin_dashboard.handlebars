@@ -1,31 +1,53 @@
-<h2>Welcome, admin</h2>
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h2>Welcome, {{username}}</h2>
+      <p class="text-medium-emphasis">Admin Panel - User Management</p>
+    </div>
+  </div>
 
-<!-- 🔗 Add this link to go to the queue panel -->
-<p><a href="/admin/queues">📋 View Request Queues</a></p>
-
-<h3>Users Awaiting Activation</h3>
-<table border="1">
-  <tr>
-    <th>Username</th>
-    <th>Email</th>
-    <th>Action</th>
-  </tr>
-  {{#each users}}
-  <tr>
-    <td>{{UserName}}</td>
-    <td>{{Email}}</td>
-    <td>
-      {{#if Active}}
-        ✅ Activated
-      {{else}}
-        <form method="POST" action="/admin/activate">
-          <input type="hidden" name="email" value="{{Email}}">
-          <button type="submit">Activate</button>
-        </form>
-      {{/if}}
-    </td>
-  </tr>
-  {{/each}}
-</table>
-
-<p><a href="/logout">Logout</a></p>
+  <div class="card">
+    <div class="card-header">Registered Users</div>
+    <div class="card-body table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>User Type</th>
+            <th>Active</th>
+            <th>Registered At</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each users}}
+            <tr>
+              <td>{{this.UserName}}</td>
+              <td>{{this.Email}}</td>
+              <td><span class="badge bg-secondary">{{this.UserType}}</span></td>
+              <td>
+                {{#if this.Active}}
+                  <span class="badge bg-success">Active</span>
+                {{else}}
+                  <span class="badge bg-warning text-dark">Pending</span>
+                {{/if}}
+              </td>
+              <td>{{formatDate this.CreatedAt}}</td>
+              <td>
+                {{#unless this.Active}}
+                  <form method="POST" action="/admin/activate">
+                    <input type="hidden" name="email" value="{{this.Email}}">
+                    <button class="btn btn-sm btn-outline-primary" type="submit">Activate</button>
+                  </form>
+                {{else}}
+                  <span class="text-muted">—</span>
+                {{/unless}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
