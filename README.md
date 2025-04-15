@@ -46,3 +46,4 @@ http://127.0.0.1:8000/
 ## 📌 Notes:
 - Session expire after 5 minutes
 - Session info stored in MongoDB under Sessions collection
+- youtube video: https://youtu.be/3W2VN-yMYL0?si=6SUGVXLpksLKrdLI
