@@ -1,239 +1,356 @@
-const mongodb = require('mongodb');
-const { ObjectId } = require('mongodb');
+const express = require('express');
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const path = require('path');
+const handlebars = require('express-handlebars');
+const crypto = require('crypto');
+const business = require('./business.js');
 
+const app = express();
+const PORT = 8000;
 
-let client;
-let db;
-let users;
-let sessions;
-let requests;
+// Static files
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Database Connection (Keep it the Same as You Wanted)
-async function connectDatabase() {
-    if (!client) {
-        client = new mongodb.MongoClient('mongodb+srv://AlMoatasim60300294:QWER.1234@cluster.jlnza.mongodb.net/');
-        db = client.db('CMS_db');  // database name
-        users = db.collection('Users');  // Collection for user accounts
-        sessions = db.collection('Sessions');  // Collection for session data        
-        requests = db.collection('Requests');  // Collection for requests data
+// Handlebars setup
+app.set('views', path.join(__dirname, 'templates'));
+app.engine('hbs', handlebars.engine({
+  extname: '.hbs',
+  layoutsDir: path.join(__dirname, 'templates/layouts'),
+  defaultLayout: 'main',
+  helpers: {
+    eq: (a, b) => a === b,
+    formatDate: date => new Date(date).toLocaleDateString(),
+    statusColor: status => {
+      switch (status) {
+        case 'pending': return 'warning';
+        case 'approved': return 'success';
+        case 'rejected': return 'danger';
+        default: return 'secondary';
+      }
     }
-}
+  }
+}));
+app.set('view engine', 'hbs');
 
-// User Registration
-async function createUser(username, hashedPassword, email, activationCode, userType, isActive) {
-    await connectDatabase();
-    let user = {
-        UserName: username,
-        Password: hashedPassword,
-        Email: email,
-        ActivationCode: activationCode,
-        UserType: userType,
-        Active: isActive,
-        CreatedAt: new Date()
-    };
+// Middleware
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-    await users.insertOne(user);
-    console.log(`User registered: ${username} (${userType})`);
-}
-
-// User Verification
-async function verifyUser(email, activationCode) {
-    await connectDatabase();
-    let user = await users.findOne({ Email: email, ActivationCode: activationCode });
-
-    if (user) {
-        await users.updateOne({ Email: email }, { 
-            $set: { Active: true }, 
-            $unset: { ActivationCode: "" } // ✅ Remove activation code after verification
-        });
-
-        console.log(`User ${email} is now verified and active.`);
-        return true;
+// ------------------------------
+// Session Middleware (Global)
+// ------------------------------
+app.use(async (req, res, next) => {
+  const sessionID = req.cookies.CMS_Session;
+  if (sessionID) {
+    const sessionData = await business.getSessionData(sessionID);
+    if (sessionData) {
+      req.user = sessionData.username;
+      req.userType = sessionData.userType;
     }
-    return false;
-}
+  }
+  next();
+});
 
-// Retrieve User Data
-async function getUserByUsernameOrEmail(username, email) {
-    await connectDatabase();
-    return await users.findOne({ $or: [{ UserName: username }, { Email: email }] });
-}
+// ------------------------------
+// Routes
+// ------------------------------
 
-async function getUserDetails(username) {
-    await connectDatabase();
-    return await users.findOne({ UserName: username });
-}
+// Login
+app.get('/', (req, res) => {
+  res.render('login', { layout: undefined, message: req.query.message });
+});
 
-async function getUserByEmail(email) {
-    await connectDatabase();
-    return await users.findOne({ Email: email });
-}
+app.post('/', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.redirect("/?message=Invalid Username/Password");
 
-// Admin
-async function getAllUsers() {
-    await connectDatabase();
-    return await users.find({}, { projection: { Password: 0 } }).toArray(); // ✅ Hide password field
-}
+  const loginStatus = await business.checkLogin(username, password);
+  if (!loginStatus) return res.redirect("/?message=Invalid Username/Password");
+  if (loginStatus === "inactive") return res.redirect("/?message=Please verify your email before logging in");
 
-async function activateUser(email) {
-    await connectDatabase();
-    let result = await users.updateOne({ Email: email }, { $set: { Active: true } });
+  const userType = (username === "admin") ? "admin" : "student";
+  const session = await business.startSession({ username, userType });
 
-    if (result.modifiedCount > 0) {
-        console.log(`User ${email} activated successfully.`);
-        return true;
-    } else {
-        console.log(`User activation failed for ${email}.`);
-        return false;
+  res.cookie('CMS_Session', session.uuid, { expires: session.expiry });
+  res.redirect(userType === "admin" ? "/admin" : "/dashboard");
+});
+
+// Register
+app.get('/register', (req, res) => {
+  res.render('register', { layout: undefined, message: req.query.message });
+});
+
+app.post('/register', async (req, res) => {
+  const { username, email, password, repeatPassword } = req.body;
+
+  if (!username || !email || !password || !repeatPassword) {
+    return res.redirect('/register?message=All fields are required');
+  }
+
+  if (password !== repeatPassword) {
+    return res.redirect('/register?message=Passwords do not match');
+  }
+
+  const result = await business.createUser(username, password, email);
+  if (!result.success) {
+    return res.redirect('/register?message=' + encodeURIComponent(result.message));
+  }
+
+  res.redirect('/?message=Check console for activation code');
+});
+
+// Verify Email
+app.get('/verify', (req, res) => {
+  res.render('verify', { layout: undefined, message: req.query.message });
+});
+
+app.post('/verify', async (req, res) => {
+  const { email, activationCode } = req.body;
+  const success = await business.verifyUser(email, activationCode);
+  res.redirect(success ? '/?message=Account activated successfully' : '/verify?message=Invalid activation code');
+});
+
+// Forgot Password
+app.get('/forgot-password', (req, res) => {
+  res.render('forgot-password', { layout: undefined, message: req.query.message });
+});
+
+app.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.redirect('/forgot-password?message=Please enter your email');
+
+  const user = await business.getUserByEmail(email);
+  if (!user) return res.redirect('/forgot-password?message=This email is not registered');
+
+  console.log(`Password reset requested for ${email}`);
+  res.redirect('/forgot-password?message=A password reset email has been sent');
+});
+
+// Logout
+app.get('/logout', async (req, res) => {
+  const sessionKey = req.cookies.CMS_Session;
+  if (sessionKey) {
+    await business.deleteSession(sessionKey);
+    res.clearCookie('CMS_Session');
+  }
+  res.redirect('/?message=Logged out successfully');
+});
+
+// ------------------------------
+// Student Routes
+// ------------------------------
+
+app.get('/dashboard', async (req, res) => {
+  if (!req.user || req.userType !== "student") {
+    return res.redirect("/?message=Unauthorized");
+  }
+
+  const courses = await business.getStudentCourses(req.user);
+  const csrfToken = crypto.randomBytes(24).toString("hex");
+  res.cookie("csrfToken", csrfToken);
+
+  res.render('standard_dashboard', {
+    layout: 'main',
+    title: 'Student Dashboard',
+    page: 'Dashboard',
+    username: req.user,
+    courses,
+    csrfToken,
+    userType: req.userType,
+    semester: "Winter 2025"
+  });
+});
+
+app.get('/my-requests', async (req, res) => {
+  if (!req.user || req.userType !== "student") {
+    return res.redirect("/?message=Unauthorized");
+  }
+
+  const semester = req.query.semester || "Winter 2025";
+  const requests = await business.getRequestsByUser(req.user, semester);
+
+  res.render('standard_dashboard', {
+    layout: 'main',
+    title: 'My Requests',
+    page: 'My Requests',
+    username: req.user,
+    userType: req.userType,
+    courses: await business.getStudentCourses(req.user),
+    requests,
+    csrfToken: crypto.randomBytes(24).toString("hex"),
+    semester
+  });  
+});
+
+app.post('/submit-request', async (req, res) => {
+  if (!req.user || req.userType !== "student") {
+    return res.redirect("/?message=Unauthorized");
+  }
+
+  const { category, details, csrfToken } = req.body;
+  const cookieToken = req.cookies.csrfToken;
+
+  if (!csrfToken || csrfToken !== cookieToken) {
+    return res.status(403).send("Invalid CSRF token.");
+  }
+
+  if (!category || !details) {
+    return res.redirect('/dashboard?message=All fields are required');
+  }
+
+  await business.submitRequest({ username: req.user, category, details });
+  res.redirect('/dashboard?message=Request submitted successfully');
+});
+
+app.post('/cancel-request', async (req, res) => {
+  if (!req.user || req.userType !== "student") {
+    return res.redirect("/?message=Unauthorized");
+  }
+
+  const { requestId } = req.body;
+  if (!requestId) return res.redirect('/my-requests?message=Invalid request');
+
+  const success = await business.cancelRequestByUser(requestId, req.user);
+  res.redirect(`/my-requests?message=${success ? "Request cancelled" : "Failed to cancel request"}`);
+});
+
+// ------------------------------
+// Admin Routes
+// ------------------------------
+
+app.get('/admin', async (req, res) => {
+  if (!req.user || req.userType !== "admin") return res.redirect("/?message=Unauthorized");
+
+  const users = await business.getAllUsers();
+  res.render('admin_dashboard', {
+    layout: 'main',
+    title: 'Admin Panel',
+    page: 'Admin Dashboard',
+    username: req.user,
+    userType: req.userType, // ✅ Needed for the sidebar to work correctly
+    users
+  });
+  
+});
+
+app.get('/admin/queues', async (req, res) => {
+  if (!req.user || req.userType !== "admin") return res.redirect("/?message=Unauthorized");
+
+  const allRequests = await business.getAllRequests();
+  const queueStats = {};
+
+  for (let r of allRequests) {
+    if (!queueStats[r.category]) {
+      queueStats[r.category] = { total: 0, pending: 0 };
     }
-}
+    queueStats[r.category].total++;
+    if (r.status === "Pending") queueStats[r.category].pending++;
+  }
 
-// Standard
-async function getStudentCourses(username) {
-    await connectDatabase();
-    let student = await users.findOne({ UserName: username });
+  res.render('admin_queues', {
+    layout: 'main',
+    title: 'Request Queues',
+    page: 'Manage Queues', // ✅ used in breadcrumb and for highlighting
+    username: req.user,
+    userType: req.userType,
+    queueStats
+  });
+  
+});
 
-    if (!student) {
-        return [];
-    }
+app.get('/admin/queue/:category', async (req, res) => {
+  if (!req.user || req.userType !== "admin") return res.redirect("/?message=Unauthorized");
 
-    return student.Courses || [];
-}
+  const category = req.params.category;
+  const requests = await business.getRequestsByCategory(category);
 
-async function getRequestsByUser(username, semester) {
-    await connectDatabase();
-    return await requests.find({ username, semester }).toArray();
-}
-
-
-
-// Session Management - Expires in 5 Minutes
-async function storeSession(sessionID, username, userType) {
-    await connectDatabase();
-    let expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    await sessions.insertOne({ sessionID, username, userType, createdAt: new Date(), expiresAt });
-}
-
-// Get session (Check if session is valid)
-async function getSession(sessionID) {
-    await connectDatabase();
-    let session = await sessions.findOne({ sessionID });
-
-    if (session) {
-        let now = new Date();
-        if (now > session.expiresAt) {
-            console.log("Session expired. Logging out user.");
-            await deleteSession(sessionID);
-            return null; 
-        }
-        return session;
-    }
-    return null; // No session found
-}
-
-// Delete session (logout)
-async function deleteSession(sessionID) {
-    await connectDatabase();
-    await sessions.deleteOne({ sessionID });
-    console.log("Session deleted.");
-}
-
-async function saveRequest(requestUser) {
-    await connectDatabase();
-
-    const { username, category, details } = requestUser;
-
-    // Step 1: Count current requests in same category with status = "Pending"
-    const queueSize = await requests.countDocuments({ category, status: "Pending" });
-
-    // Step 2: Estimate time: 15 mins per request
-    const estimatedTime = new Date(Date.now() + queueSize * 15 * 60 * 1000);
-
-    // Step 3: Save full request object
-    await requests.insertOne({
-        username,
-        category,
-        details,
-        semester: "Winter 2025", // hardcoded for now
-        status: "Pending",
-        submittedAt: new Date(),
-        estimatedCompletion: estimatedTime
-    });
-    
-
-    console.log(`New request submitted by ${username} in ${category} queue`);
-}
-
-async function cancelRequest(requestId, username) {
-    await connectDatabase();
-
-    const result = await requests.updateOne(
-        { _id: new ObjectId(requestId), username, status: "Pending" },
-        { $set: { status: "Cancelled", cancelledAt: new Date() } }
-    );
-
-    return result.modifiedCount > 0;
-};
-
-async function getAllRequests() {
-    await connectDatabase();
-    return await requests.find({}).toArray();
-}
-
-async function getRequestsByCategory(category) {
-    await connectDatabase();
-    return await requests.find({ category }).toArray();
-}
-
-async function getRequestById(id) {
-    await connectDatabase();
-    return await requests.findOne({ _id: new ObjectId(id) });
-}
-
-async function processRequest(id, status, note) {
-    await connectDatabase();
-    return await requests.updateOne(
-        { _id: new ObjectId(id), status: "Pending" },
-        {
-            $set: {
-                status,
-                processedAt: new Date(),
-                note
-            }
-        }
-    );
-}
-
-async function getRandomPendingRequest() {
-    await connectDatabase();
-    const pending = await requests.aggregate([
-        { $match: { status: "Pending" } },
-        { $sample: { size: 1 } } // MongoDB random sample
-    ]).toArray();
-
-    return pending[0]; // or undefined if none
-}
+  res.render('admin_queue_detail', {
+    layout: 'main',
+    title: `${category} Queue`,
+    page: 'Manage Queues',  // ✅ This keeps "Manage Queues" highlighted
+    username: req.user,
+    userType: req.userType,
+    category,
+    requests
+  });
+});
 
 
-// Export All Functions
-module.exports = {
-    getUserDetails,
-    storeSession,
-    getSession,
-    deleteSession,
-    createUser,
-    verifyUser,
-    getUserByEmail,
-    getUserByUsernameOrEmail,
-    getAllUsers,
-    activateUser,
-    getStudentCourses,
-    getRequestsByUser,
-    saveRequest,
-    cancelRequest,
-    getAllRequests,
-    getRequestsByCategory,
-    getRequestById,
-    processRequest,
-    getRandomPendingRequest
-};
+app.get('/admin/process/:id', async (req, res) => {
+  if (!req.user || req.userType !== "admin") return res.redirect("/?message=Unauthorized");
+
+  const request = await business.getRequestById(req.params.id);
+  if (!request) return res.send("Request not found.");
+
+  res.render('admin_process_request', {
+    layout: 'main',
+    title: 'Process Request',
+    page: 'Process',
+    username: req.user,
+    request
+  });
+});
+
+app.post('/admin/process/:id', async (req, res) => {
+  if (!req.user || req.userType !== "admin") return res.redirect("/?message=Unauthorized");
+
+  const { action, note } = req.body;
+  if (!["Resolved", "Rejected"].includes(action)) return res.send("Invalid action.");
+
+  await business.processRequest(req.params.id, action, note);
+  console.log(`[EMAIL SIMULATION] Request ${req.params.id} was ${action}. Note: ${note}`);
+  res.redirect('/admin/queues?message=Request processed');
+});
+
+app.post('/admin/activate', async (req, res) => {
+  if (!req.user || req.userType !== "admin") return res.redirect("/?message=Unauthorized");
+
+  await business.activateUser(req.body.email);
+  res.redirect("/admin");
+});
+
+app.get('/admin/random-request', async (req, res) => {
+  if (!req.user || req.userType !== "admin") return res.redirect("/?message=Unauthorized");
+
+  const random = await business.getRandomPendingRequest();
+  if (!random) return res.redirect("/admin/queues?message=No pending requests found.");
+
+  res.redirect(`/admin/process/${random._id}`);
+});
+
+app.get('/widgets', (req, res) => {
+  res.render('widgets', {
+    title: 'Widgets',
+    page: 'Widgets'
+  });
+});
+
+
+// ✅ 🔥 Your test error route (safe here)
+app.get('/test-error', (req, res) => {
+  throw new Error("Simulated 500 error");
+});
+
+
+// 404 handler (must be last route)
+app.use((req, res) => {
+  res.status(404).render('404', {
+    layout: false
+  });
+});
+
+// 500 Internal Server Error handler
+app.use((err, req, res, next) => {
+  console.error("💥 500 error:", err.stack);
+  res.status(500).render('500', { layout: false });
+});
+
+
+// ------------------------------
+// Start Server
+// ------------------------------
+app.listen(PORT, () => {
+  console.log(`✅ Server running at http://127.0.0.1:${PORT}/`);
+});
+// ------------------------------
