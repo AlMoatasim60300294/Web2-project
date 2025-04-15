@@ -1,0 +1,53 @@
+<div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col">
+        <h2>{{category}} Queue</h2>
+        <p class="text-medium-emphasis">Manage requests for this category</p>
+      </div>
+    </div>
+  
+    {{#if requests.length}}
+      <div class="card">
+        <div class="card-header">Requests</div>
+        <div class="card-body table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Username</th>
+                <th>Details</th>
+                <th>Status</th>
+                <th>Submitted</th>
+                <th>Estimated Completion</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {{#each requests}}
+                <tr>
+                  <td>{{this.username}}</td>
+                  <td>{{this.details}}</td>
+                  <td>
+                    <span class="badge bg-{{statusColor this.status}}">
+                      {{this.status}}
+                    </span>
+                  </td>
+                  <td>{{formatDate this.submittedAt}}</td>
+                  <td>{{formatDate this.estimatedCompletion}}</td>
+                  <td>
+                    {{#if (eq this.status "Pending")}}
+                      <a href="/admin/process/{{this._id}}" class="btn btn-sm btn-outline-primary">Process</a>
+                    {{else}}
+                      <span class="text-muted">—</span>
+                    {{/if}}
+                  </td>
+                </tr>
+              {{/each}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {{else}}
+      <div class="alert alert-info">No requests in this queue.</div>
+    {{/if}}
+  </div>
+  

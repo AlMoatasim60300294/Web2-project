@@ -1,0 +1,26 @@
+<div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col">
+        <h2>Request Queues</h2>
+        <p class="text-medium-emphasis">Overview of all student requests</p>
+      </div>
+    </div>
+  
+    <div class="row">
+      {{#each queueStats}}
+        <div class="col-md-6 col-lg-4">
+          <div class="card border shadow-sm mb-4">
+            <div class="card-body">
+              <h5 class="card-title">{{@key}}</h5>
+              <p class="card-text mb-1">
+                <strong>Total:</strong> {{this.total}}<br>
+                <strong>Pending:</strong> {{this.pending}}
+              </p>
+              <a href="/admin/queue/{{@key}}" class="btn btn-sm btn-primary">View Queue</a>
+            </div>
+          </div>
+        </div>
+      {{/each}}
+    </div>
+  </div>
+  

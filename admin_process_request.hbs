@@ -1,0 +1,49 @@
+<div class="container-fluid">
+    <div class="row mb-4">
+      <div class="col">
+        <h2>Process Request</h2>
+        <p class="text-medium-emphasis">Category: {{request.category}}</p>
+      </div>
+    </div>
+  
+    <div class="card">
+      <div class="card-header">Request Info</div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Username</label>
+          <div class="form-control-plaintext">{{request.username}}</div>
+        </div>
+  
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Details</label>
+          <div class="form-control-plaintext">{{request.details}}</div>
+        </div>
+  
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Submitted At</label>
+          <div class="form-control-plaintext">{{formatDate request.submittedAt}}</div>
+        </div>
+  
+        <form method="POST" action="/admin/process/{{request._id}}">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Action</label>
+            <select name="action" class="form-select" required>
+              <option disabled selected value="">Choose an action</option>
+              <option value="Resolved">Resolve</option>
+              <option value="Rejected">Reject</option>
+            </select>
+          </div>
+  
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Note (optional)</label>
+            <textarea name="note" class="form-control" rows="3"></textarea>
+          </div>
+  
+          <div class="d-grid">
+            <button type="submit" class="btn btn-success">Submit</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
