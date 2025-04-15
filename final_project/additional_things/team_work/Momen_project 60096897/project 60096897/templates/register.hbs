@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <base href="./">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Register - CMS</title>
+    <link rel="stylesheet" href="vendors/simplebar/css/simplebar.css">
+    <link rel="stylesheet" href="css/vendors/simplebar.css">
+    <link href="css/style.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="bg-light min-vh-100 d-flex flex-row align-items-center">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-md-6">
+            <div class="card mb-4 mx-4">
+              <div class="card-body p-4">
+                <h1>Register</h1>
+                <p class="text-medium-emphasis">Create your account</p>
+                <form action="/register" method="POST" onsubmit="return validateForm()">
+                  <div class="input-group mb-3">
+                    <span class="input-group-text">
+                      <svg class="icon">
+                        <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-user"></use>
+                      </svg>
+                    </span>
+                    <input class="form-control" type="text" name="username" placeholder="Username" required minlength="3">
+                  </div>
+                  <div class="input-group mb-3">
+                    <span class="input-group-text">
+                      <svg class="icon">
+                        <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-envelope-open"></use>
+                      </svg>
+                    </span>
+                    <input class="form-control" type="email" name="email" placeholder="Email" required>
+                  </div>
+                  <div class="input-group mb-3">
+                    <span class="input-group-text">
+                      <svg class="icon">
+                        <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-lock-locked"></use>
+                      </svg>
+                    </span>
+                    <input class="form-control" type="password" name="password" id="password" placeholder="Password" required minlength="6">
+                  </div>
+                  <div class="input-group mb-4">
+                    <span class="input-group-text">
+                      <svg class="icon">
+                        <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-lock-locked"></use>
+                      </svg>
+                    </span>
+                    <input class="form-control" type="password" id="confirm-password" placeholder="Repeat password" required>
+                  </div>
+                  <button class="btn btn-primary px-4" type="submit">Create Account</button>
+                  <a href="/" class="btn btn-link px-0">Already have an account?</a>
+                </form>
+                {{#if message}}
+                  <div class="alert alert-danger mt-3">{{message}}</div>
+                {{/if}}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="vendors/@coreui/coreui/js/coreui.bundle.min.js"></script>
+    <script>
+      function validateForm() {
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+        
+        if (password !== confirmPassword) {
+          alert('Passwords do not match!');
+          return false;
+        }
+        
+        if (password.length < 6) {
+          alert('Password must be at least 6 characters long!');
+          return false;
+        }
+        
+        return true;
+      }
+    </script>
+  </body>
+</html>

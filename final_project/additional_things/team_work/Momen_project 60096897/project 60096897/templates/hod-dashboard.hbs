@@ -1,0 +1,99 @@
+<div class="container-lg">
+    {{#if message}}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        {{message}}
+        <button type="button" class="btn-close" data-coreui-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {{/if}}
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Requests</h5>
+                    <p class="card-text display-6">{{stats.total}}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Pending</h5>
+                    <p class="card-text display-6">{{stats.pending}}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Approved</h5>
+                    <p class="card-text display-6">{{stats.approved}}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h5 class="card-title">Rejected</h5>
+                    <p class="card-text display-6">{{stats.rejected}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Quick Actions</strong>
+        </div>
+        <div class="card-body">
+            <div class="d-grid gap-2 d-md-flex">
+                <a href="/hod/queue" class="btn btn-primary me-md-2">
+                    <svg class="icon me-2">
+                        <use xlink:href="/node_modules/@coreui/icons/sprites/free.svg#cil-list"></use>
+                    </svg>
+                    View Queue
+                </a>
+                <a href="/hod/random" class="btn btn-info">
+                    <svg class="icon me-2">
+                        <use xlink:href="/node_modules/@coreui/icons/sprites/free.svg#cil-random"></use>
+                    </svg>
+                    Random Request
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <strong>Recent Activity</strong>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Student</th>
+                            <th>Action</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each recentActivity}}
+                        <tr>
+                            <td>{{formatDate this.date}}</td>
+                            <td>{{this.student}}</td>
+                            <td>{{this.action}}</td>
+                            <td><span class="badge bg-{{statusColor this.status}}">{{this.status}}</span></td>
+                        </tr>
+                        {{else}}
+                        <tr>
+                            <td colspan="4" class="text-center">No recent activity</td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
