@@ -1,29 +1,31 @@
-<h1>Admin Dashboard</h1>
-<p>Welcome, {{ username }}</p>
+<h2>Welcome, admin</h2>
 
-<h2>Users Awaiting Activation</h2>
+<!-- 🔗 Add this link to go to the queue panel -->
+<p><a href="/admin/queues">📋 View Request Queues</a></p>
+
+<h3>Users Awaiting Activation</h3>
 <table border="1">
-    <tr>
-        <th>Username</th>
-        <th>Email</th>
-        <th>Action</th>
-    </tr>
-    {{#each users}}
-    <tr>
-        <td>{{ this.UserName }}</td>
-        <td>{{ this.Email }}</td>
-        <td>
-            {{#if this.Active}}
-                ✅ Activated
-            {{else}}
-                <form method="post" action="/admin/activate">
-                    <input type="hidden" name="email" value="{{ this.Email }}">
-                    <button type="submit">Activate</button>
-                </form>
-            {{/if}}
-        </td>
-    </tr>
-    {{/each}}
+  <tr>
+    <th>Username</th>
+    <th>Email</th>
+    <th>Action</th>
+  </tr>
+  {{#each users}}
+  <tr>
+    <td>{{UserName}}</td>
+    <td>{{Email}}</td>
+    <td>
+      {{#if Active}}
+        ✅ Activated
+      {{else}}
+        <form method="POST" action="/admin/activate">
+          <input type="hidden" name="email" value="{{Email}}">
+          <button type="submit">Activate</button>
+        </form>
+      {{/if}}
+    </td>
+  </tr>
+  {{/each}}
 </table>
 
 <p><a href="/logout">Logout</a></p>
