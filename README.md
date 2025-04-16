@@ -11,11 +11,11 @@ This milestone implements the foundational user flow of the Course Management Sy
 ---
 
 ## 📁 Folder Structure Overview:
-/public         → Static files (CoreUI under /dist)
-/templates      → Handlebars views
-/business.js    → Core business logic
-/persistence.js → MongoDB interaction layer
-/web.js         → Main Express server
+- `/public` → Static files (CoreUI under `/dist`)
+- `/templates` → Handlebars views
+- `business.js` → Core business logic
+- `persistence.js` → MongoDB interaction layer
+- `web.js` → Main Express server
 
 ---
 
